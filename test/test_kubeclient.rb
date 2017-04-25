@@ -116,6 +116,15 @@ class KubeclientTest < MiniTest::Test
     assert_equal(error_message, exception.message)
   end
 
+  def test_api_timeout
+    stub_request(:get, 'http://localhost:8080/api').to_timeout
+
+    client = Kubeclient::Client.new('http://localhost:8080/api/')
+
+    exception = assert_raises(Kubeclient::HttpError) { client.api }
+    assert_match(/timed ?out/i, exception.message)
+  end
+
   def test_api_valid
     stub_request(:get, 'http://localhost:8080/api')
       .to_return(status: 200, body: open_test_file('versions_list.json'))
@@ -589,6 +598,36 @@ class KubeclientTest < MiniTest::Test
       'http://host:8080/api/v1/proxy/nodes/srvname:5001',
       client.proxy_url('node', 'srvname', 5001)
     )
+  end
+
+  def test_timeouts_connect
+    client = Kubeclient::Client.new(
+      'http://localhost:8080/api/',
+      timeouts: { connect: 10 }
+    )
+    rest_client = client.rest_client
+    assert_equal(10, rest_client.open_timeout)
+    assert_equal(60, rest_client.read_timeout)
+  end
+
+  def test_timeouts_read
+    client = Kubeclient::Client.new(
+      'http://localhost:8080/api/',
+      timeouts: { read: 300 }
+    )
+    rest_client = client.rest_client
+    assert_equal(60, rest_client.open_timeout)
+    assert_equal(300, rest_client.read_timeout)
+  end
+
+  def test_timeouts_infinite
+    client = Kubeclient::Client.new(
+      'http://localhost:8080/api/',
+      timeouts: { connect: nil, read: nil }
+    )
+    rest_client = client.rest_client
+    assert_equal(nil, rest_client.open_timeout)
+    assert_equal(nil, rest_client.read_timeout)
   end
 
   def test_attr_readers

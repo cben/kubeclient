@@ -26,6 +26,12 @@ module Kubeclient
       ssl_socket_class: nil
     }.freeze
 
+    DEFAULT_TIMEOUTS = {
+      # These do NOT affect watch, watching never times out.
+      connect: 60,
+      read: 60
+    }.freeze
+
     DEFAULT_HTTP_PROXY_URI = nil
 
     SEARCH_ARGUMENTS = {
@@ -50,6 +56,7 @@ module Kubeclient
       ssl_options: DEFAULT_SSL_OPTIONS,
       auth_options: DEFAULT_AUTH_OPTIONS,
       socket_options: DEFAULT_SOCKET_OPTIONS,
+      timeouts: DEFAULT_TIMEOUTS,
       http_proxy_uri: DEFAULT_HTTP_PROXY_URI
     )
       validate_auth_options(auth_options)
@@ -63,6 +70,9 @@ module Kubeclient
       @ssl_options = ssl_options
       @auth_options = auth_options
       @socket_options = socket_options
+      # Allow passing partial timeouts hash, without unspecified
+      # @timeouts[:foo] == nil resulting in infinite timeouts.
+      @timeouts = DEFAULT_TIMEOUTS.merge(timeouts)
       @http_proxy_uri = http_proxy_uri.to_s if http_proxy_uri
 
       if auth_options[:bearer_token]
@@ -215,7 +225,9 @@ module Kubeclient
         ssl_client_key: @ssl_options[:client_key],
         proxy: @http_proxy_uri,
         user: @auth_options[:username],
-        password: @auth_options[:password]
+        password: @auth_options[:password],
+        open_timeout: @timeouts[:connect],
+        read_timeout: @timeouts[:read]
       }
       RestClient::Resource.new(@api_endpoint.merge(path).to_s, options)
     end
