@@ -6,7 +6,7 @@ rvm:
   - "2.3.0"
 gemfile:
   - Gemfile
-  - .Gemfile-rest-client-1.8.rb
+  - Gemfile-rest-client-1.8.rb
 sudo: false
 cache: bundler
 script: bundle exec rake $TASK

@@ -1,4 +1,4 @@
-# Allow travis to test rest-client 1.x.
+# For travis to additionally test rest-client 1.x.
 
 source 'https://rubygems.org'
 
