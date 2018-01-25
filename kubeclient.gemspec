@@ -1,4 +1,5 @@
 # coding: utf-8
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'kubeclient/version'
@@ -25,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'minitest-rg'
   spec.add_development_dependency 'webmock', '~> 2.3.1'
   spec.add_development_dependency 'vcr'
-  spec.add_development_dependency 'rubocop', '= 0.47.1'
+  spec.add_development_dependency 'rubocop', '= 0.49.1'
   spec.add_dependency 'rest-client'
   spec.add_dependency 'recursive-open-struct', '~> 1.0.0'
   spec.add_dependency 'http', '= 0.9.8'
