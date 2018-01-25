@@ -449,7 +449,7 @@ module Kubeclient
         elsif RestClient::Resource.instance_methods.include?(:timeout) # rest-client 1.x
           :timeout
         else
-          fail ArgumentError("RestClient doesn't support neither :read_timeout nor :timeout")
+          raise ArgumentError("RestClient doesn't support neither :read_timeout nor :timeout")
         end
     end
 
