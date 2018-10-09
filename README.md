@@ -409,20 +409,49 @@ client.delete_deployment(deployment_name, namespace, delete_options: delete_opti
 #### Create an entity
 For example: `create_pod pod_object`, `create_replication_controller rc_obj`, `create_secret secret_object`, `create_resource_quota resource_quota_object`, `create_limit_range limit_range_object`, `create_persistent_volume persistent_volume_object`, `create_persistent_volume_claim persistent_volume_claim_object`, `create_service_account service_account_object`
 
-Input parameter - object of type `Service`, `Pod`, `ReplicationController`.
+Input parameter - object of type `Kubeclient::Resource`.
 
 The below example is for v1
 
+```ruby
+service = Kubeclient::Resource.new(
+  metadata: {
+    name: "redis-master",
+    namespace: 'staging',
+    labels: {
+      'app' => 'redis',
+      'role' => 'slave'
+    }
+  },
+  spec: {
+    ports: [
+      {
+        'port' => 6379,
+        'targetPort' => 'redis-server'
+      }
+    ],
+    selector: {
+      name: "redis",
+      role: "master"
+    }
+  }
+)
+client.create_service(service)
+```
+
+Another style is to populate a Resource by assignments:
 ```ruby
 service = Kubeclient::Resource.new
 service.metadata = {}
 service.metadata.name = "redis-master"
 service.metadata.namespace = 'staging'
 service.spec = {}
-service.spec.ports = [{
-  'port' => 6379,
-  'targetPort' => 'redis-server'
-}]
+service.spec.ports = [
+  {
+    'port' => 6379,
+    'targetPort' => 'redis-server'
+  }
+]
 service.spec.selector = {}
 service.spec.selector.name = "redis"
 service.spec.selector.role = "master"
@@ -431,6 +460,7 @@ service.metadata.labels.app = 'redis'
 service.metadata.labels.role = 'slave'
 client.create_service(service)
 ```
+
 
 #### Update an entity
 For example: `update_pod`, `update_service`, `update_replication_controller`, `update_secret`, `update_resource_quota`, `update_limit_range`, `update_persistent_volume`, `update_persistent_volume_claim`, `update_service_account`
