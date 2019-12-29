@@ -207,7 +207,7 @@ client = Kubeclient::Client.new(
 
 ### Timeouts
 
-Watching never times out.
+Watching configures the socket to never time out. However, sooner or later the connection will get broken.
 
 One-off actions like `.get_*`, `.delete_*` have a configurable timeout:
 ```ruby
@@ -447,11 +447,13 @@ You can specify multiple labels (that option will return entities which have bot
 pods = client.get_pods(label_selector: 'name=redis-master,app=redis')
 ```
 
-You can get entities at a specific version by specifying a parameter named `resource_version` (named `resourceVersion` in Kubernetes server):
-
+You can ask for entities at a specific version by specifying a parameter named `resource_version`:
 ```ruby
 pods = client.get_pods(resource_version: '0')
 ```
+but it's not guaranteed you'll get it.  See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions to understand the semantics.
+
+The returned list has
 
 Get all entities of a specific type in chunks:
 
@@ -507,6 +509,61 @@ Other formats are:
  - `:ros` (default) for `RecursiveOpenStruct`
  - `:parsed` for `JSON.parse`
  - `:parsed_symbolized` for `JSON.parse(..., symbolize_names: true)`
+
+#### Watch — Receive entities updates
+
+See https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes for an overview.
+
+It is possible to receive live update notices watching the relevant entities:
+
+```ruby
+client.watch_pods do |notice|
+  # process notice data
+end
+```
+
+The notices have `.type` field which may be "ADDED", "MODIFIED", "DELETED", or "ERROR", and `.object` field containing the object.
+
+You can specify version to start from, commonly used in "List+Watch" pattern:
+```
+list = client.get_pods
+collection_version = list.metadata.resourceVersion
+
+# note underscore spelling vs camelCase.
+client.watch_pods(resource_version: collection_version) do |notice|
+  # process notice data
+end
+```
+It's important to understand [the effects of unset/0/specific version](https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions) as it modifies the behavior of the watch — in some modes you'll first see synthetic "ADDED" notices for all existing objects.
+
+It is possible to interrupt the watcher from another thread with:
+
+```ruby
+watcher = client.watch_pods
+watcher.each do |notice|
+  # process notice data
+end
+
+watcher.finish # other thread
+```
+
+For namespaced entities, the default watches across all namespaces, and you can specify `client.watch_secrets(namespace: 'foo')` to only watch in a single namespace.
+
+You can narrow down using `label_selector:` and `field_selector:` params, like with `get_pods` methods.
+
+You can also watch a single object by specifying `name:` e.g. `client.watch_nodes(name: 'gandalf')` (not namespaced so a name is enough) or `client.watch_pods(namespace: 'foo', name: 'bar')` (namespaced, need both params).
+Note the method name is still plural!  There is no `watch_pod`, only `watch_pods`.  The yielded "type" remains the same — watch notices, it's just they'll always refer to the same object.
+
+You can use `as:` param to control the resulting format.
+
+#### Watch events for a particular object
+You can use the `field_selector` option as part of the watch methods.
+
+```ruby
+client.watch_events(namespace: 'development', field_selector: 'involvedObject.name=redis-master') do |notice|
+  # process notice date
+end
+```
 
 #### Delete an entity (by name)
 
@@ -590,35 +647,6 @@ This method is a convenience method instead of calling each entity's get method 
 
 ```ruby
 client.all_entities
-```
-
-#### Receive entity updates
-It is possible to receive live update notices watching the relevant entities:
-
-```ruby
-client.watch_pods do |notice|
-  # process notice data
-end
-```
-
-It is possible to interrupt the watcher from another thread with:
-
-```ruby
-watcher = client.watch_pods
-watcher.each do |notice|
-  # process notice data
-end
-
-watcher.finish # other thread
-```
-
-#### Watch events for a particular object
-You can use the `field_selector` option as part of the watch methods.
-
-```ruby
-client.watch_events(namespace: 'development', field_selector: 'involvedObject.name=redis-master') do |notice|
-  # process notice date
-end
 ```
 
 #### Get a proxy URL
