@@ -28,6 +28,14 @@ module Kubeclient
             yield @formatter.call(line.chomp)
           end
         end
+        # We get to this point if apiserver closed the socket.
+        # The connection can also be aborted by network issues / middleboxes,
+        # which can cause ConnectionError (https://github.com/httprb/http/issues/556).
+        # The exact cause doesn't matter to caller, bottom line is "infinite" watch finished.
+        # TODO: attempt resuming (https://github.com/abonas/kubeclient/pull/273).
+      rescue HTTP::ConnectionError
+        return
+      # .finish closing the socket underneath us can cause a wide range of exceptions...
       rescue StandardError
         raise unless @finished
       end
