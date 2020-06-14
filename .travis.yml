@@ -9,10 +9,13 @@ os:
 rvm:
   - "2.2.0"
   - "2.3.0"
+  - "jruby-9.1.9.0"
   - "2.4.0"
   - "2.5.0"
   - "2.6.0"
   - "2.7.0"
+  - "ruby-head"
+  - "jruby-head"
 env:
  - TASK=test
 matrix:
