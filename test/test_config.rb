@@ -199,18 +199,19 @@ class KubeclientConfigTest < MiniTest::Test
       assert_kind_of(OpenSSL::X509::Store, context.ssl_options[:cert_store])
       assert_kind_of(OpenSSL::X509::Certificate, context.ssl_options[:client_cert])
       assert_kind_of(OpenSSL::PKey::RSA, context.ssl_options[:client_key])
-      # When certificates expire the quickest way to recreate them is using
-      # an OpenShift tool (100% compatible with kubernetes):
+      # When certificates expire a simple way to recreate them is using easyrsa:
+      # (based on https://kubernetes.io/docs/concepts/cluster-administration/certificates/)
       #
-      #   $ oc adm ca create-master-certs --hostnames=localhost
+      #   $ cd test/config/
+      #   $ git clone --single-branch --branch=v3.0.8 --depth=1 https://github.com/OpenVPN/easy-rsa
+      #   $ easy-rsa/easyrsa3/easyrsa init-pki
+      #   $ easy-rsa/easyrsa3/easyrsa --batch --req-cn=10.0.0.2@$(date +%s) build-ca nopass
+      #   $ easy-rsa/easyrsa3/easyrsa --subject-alt-name="IP:10.0.0.2,IP:10.0.0.3,DNS:kubernetes,DNS:kubernetes.default,DNS:kubernetes.default.svc,DNS:kubernetes.default.svc.cluster,DNS:kubernetes.default.svc.cluster.local" --days=10000 build-server-full server nopass
+      #   $ cp pki/ca.crt external-ca.pem
+      #   $ cp pki/issued/server.crt external-cert.pem
+      #   $ cp pki/private/server.key external-key.rsa
       #
-      # At the time of this writing the files to be updated are:
-      #
-      #   cp openshift.local.config/master/admin.kubeconfig test/config/allinone.kubeconfig
-      #   cp openshift.local.config/master/ca.crt           test/config/external-ca.pem
-      #   cp openshift.local.config/master/admin.crt        test/config/external-cert.pem
-      #   cp openshift.local.config/master/admin.key        test/config/external-key.rsa
-      skip 'needs investigation'
+      # after that confirm `bundle exec rake test` works and
       assert(context.ssl_options[:cert_store].verify(context.ssl_options[:client_cert]))
     else
       assert_equal(OpenSSL::SSL::VERIFY_NONE, context.ssl_options[:verify_ssl])
