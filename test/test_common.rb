@@ -36,34 +36,38 @@ class CommonTest < MiniTest::Test
       ImageStream image_stream
       dogstatsd dogstatsd
       lowerCamelUPPERCase lower_camel_upper_case
+      lowerUPPERCamelUPPER lower_upper_camel_upper
+      UPPER upper
       HTTPAPISpecBinding httpapi_spec_binding
       APIService api_service
       OAuthAccessToken o_auth_access_token
       OAuthAuthorizeToken o_auth_authorize_token
       OAuthClient o_auth_client
       OAuthClientAuthorization o_auth_client_authorization
+      DNS dns
+      ServiceCA service_ca
     ].each_slice(2) do |kind, expected_underscore|
       underscore = Kubeclient::Client.underscore_entity(kind)
-      assert_equal(underscore, expected_underscore)
+      assert_equal(expected_underscore, underscore)
     end
   end
 
   def test_format_datetime_with_string
     value = '2018-04-27T18:30:17.480321984Z'
     formatted = client.send(:format_datetime, value)
-    assert_equal(formatted, value)
+    assert_equal(value, formatted)
   end
 
   def test_format_datetime_with_datetime
     value = DateTime.new(2018, 4, 30, 19, 20, 33)
     formatted = client.send(:format_datetime, value)
-    assert_equal(formatted, '2018-04-30T19:20:33.000000000+00:00')
+    assert_equal('2018-04-30T19:20:33.000000000+00:00', formatted)
   end
 
   def test_format_datetime_with_time
     value = Time.new(2018, 4, 30, 19, 20, 33, 0)
     formatted = client.send(:format_datetime, value)
-    assert_equal(formatted, '2018-04-30T19:20:33.000000000+00:00')
+    assert_equal('2018-04-30T19:20:33.000000000+00:00', formatted)
   end
 
   def test_parse_definition_with_unconventional_names
@@ -77,10 +81,12 @@ class CommonTest < MiniTest::Test
       TestMismatch other-odd-name testmismatch otheroddname
       MixedDashMinus mixed-dash_minuses mixed_dash_minus mixed_dash_minuses
       SameUptoWordboundary sameup-toword-boundarys sameuptowordboundary sameuptowordboundarys
+      DNS dnses dns dnses
+      ServiceCA servicecas service_ca service_cas
+      APIService apiservices api_service api_services
     ].each_slice(4) do |kind, plural, expected_single, expected_plural|
       method_names = Kubeclient::Client.parse_definition(kind, plural).method_names
-      assert_equal(method_names[0], expected_single)
-      assert_equal(method_names[1], expected_plural)
+      assert_equal([expected_single, expected_plural], method_names)
     end
   end
 end
