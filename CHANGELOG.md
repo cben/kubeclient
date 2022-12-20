@@ -7,10 +7,29 @@ Kubeclient release versioning follows [SemVer](https://semver.org/).
 ## Unreleased — to become 5.y.z
 
 ### Added
+
 - Added impersonation support. Limited to at most 1 group in `as_groups` and 1 value for each `as_user_extra` field. (#600)
 
 ### Changed
+
 - `Kubeclient::Client.new` now always requires an api version, use for example: `Kubeclient::Client.new(uri, 'v1')`
+
+- The mapping from Kind to kubeclient method name changed when the kind has consecutive capical letters.
+  The new algorithm is similar to ActiveSupport's `String#underscore` method.
+  It understands 2+ capital letters followed by lowercase as separate words: an initialism + camel case.
+
+  |  kind                      |  old method names            |  new method names             |
+  |  ------                    |  ------------------------    | --------------------------    |
+  | `APIService`               | `apiservice`                 | `api_service`                 |
+  | `APIVersions`              | `apiversions`                | `api_versions`                |
+  | `OAuthAccessToken`         | `oauth_access_token`         | `o_auth_access_token`         |
+  | `OAuthAuthorizeToken`      | `oauth_authorize_token`      | `o_auth_authorize_token`      |
+  | `OAuthClient`              | `oauth_client`               | `o_auth_client`               |
+  | `OAuthClientAuthorization` | `oauth_client_authorization` | `o_auth_client_authorization` |
+  | `HTTPAPISpecBinding`       | `httpapispec_binding`        | `httpapi_spec_binding`        |
+  | `lowerCamelUPPERCase`      | `lower_camel_uppercase`      | `lower_camel_upper_case`      |
+
+  TODO: this doesn't fully work yet! #605
 
 ### TODO: lots of changes on master branch missing here!
 
